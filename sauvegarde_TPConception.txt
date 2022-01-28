@@ -1,0 +1,440 @@
+/************************************************************************************************/
+/***  Titre  :               Formation C++                                                    ***/
+/***  Auteur :               Guillaume ANGIBAUD                                               ***/
+/***  Date :                 01/06/2021                                                       ***/
+/************************************************************************************************/
+// --- Include ---
+#include <stdio.h>
+#include <vector>
+#include <iostream>
+#include <cmath>
+#include <ctime>
+#include <string>
+#include <mutex>
+#include <thread>
+#include <memory>
+#include <fstream>
+#include <map>
+
+// --- namesapce ---
+using namespace std;
+
+// -----------------------------------  Fichiers Headers ----------------------------------------
+
+/******************************************/
+/*** Fichier : Sensor.h                 ***/
+/*** But : Simulation d'un capteur      ***/
+/***       de temperature               ***/
+/******************************************/
+class Sensor
+{
+    // Attributs
+    private:
+
+        // Date / valeur de la temperature en degres
+        pair<string, int> m_temperatureInfo; 
+        // Flag indiquant si le capteur est actif
+        bool m_activated;
+
+       
+    // Methodes
+    public:
+        Sensor();
+        ~Sensor();
+       
+        // Simulation de la temperature
+        void sensorRunning();
+        // Lecture de la temperature courante horodatee
+        pair<string, int> getTemperature();
+        // Arret de la simulation de temperature
+        void stop();
+};
+
+/******************************************/
+/*** Fichier : CAP.h                        ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+class CAP
+{
+    protected:
+        //int m_SerialNumber;
+        string m_Name;
+        vector<pair<string, int>> m_StorageTemp;
+        
+    public:
+        CAP();
+        CAP(string i_StringName);
+        virtual ~CAP();
+        
+        
+        string getName() const;
+        
+        
+        void RecordTemp(shared_ptr<Sensor> i_pSensor);
+        void DisplayAllTemp();
+
+    private:
+    
+    
+};
+
+/******************************************/
+/*** Fichier : CAPOperator.h            ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+class CAPOperator : public CAP
+{
+    private:
+    
+       // const string CAP_OPERATOR_NAME = "CAPOperator";
+    public:
+        CAPOperator(int i_CountOpe);
+        virtual ~CAPOperator();
+        
+       // virtual void DisplayAllTemp();
+
+    private:
+    
+};
+
+/******************************************/
+/*** Fichier : CAPAdmin.h                ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+class CAPAdmin : public CAP
+{
+    private:
+       // string CAP_ADMIN_NAME = "CAPAdmin";
+    public:
+        CAPAdmin() = delete;
+        CAPAdmin(int i_CountAdmin);
+        virtual ~CAPAdmin();
+
+        //virtual void DisplayAllTemp();
+    private:
+    
+};
+
+
+/******************************************/
+/*** Fichier : CAPFactory.h             ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+class CAPFactory
+{
+    public:
+        CAPFactory();
+        virtual ~CAPFactory();
+        virtual shared_ptr<CAP> CreateCAP() = 0;
+    private:
+    
+};
+
+
+/******************************************/
+/*** Fichier : CAPOperatorFactory.h       ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+//class CAPOperator; // forward declaration pour connaître "CAPOperator"
+
+class CAPOperatorFactory : public CAPFactory
+{
+    private:
+       int m_OperatorCount;
+    public:
+        CAPOperatorFactory();
+        virtual ~CAPOperatorFactory();
+        virtual shared_ptr<CAP> CreateCAP() override final ;
+    
+
+    
+};
+
+/******************************************/
+/*** Fichier : CAPAdminFactory.h       ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+class CAPAdminFactory : public CAPFactory
+{
+    private:
+        int m_AdminCount;
+        
+    public:
+        CAPAdminFactory();
+        virtual ~CAPAdminFactory();
+        virtual shared_ptr<CAP> CreateCAP() override final;
+        
+    
+
+};
+
+
+
+
+
+// -----------------------------------  Fichiers Sources ----------------------------------------
+
+/******************************************/
+/*** Fichier : Sensor.cpp               ***/
+/*** But : Simulation d'un capteur      ***/
+/***       de temperature               ***/
+/******************************************/
+// Constructeur par defaut
+Sensor::Sensor():m_activated(true)
+{
+    m_temperatureInfo = make_pair("", 0);
+}
+
+// Destructeur
+Sensor::~Sensor()
+{
+}
+
+// Simulation de la temperature
+void Sensor::sensorRunning()
+{
+    while(m_activated == true)
+    {
+		/* ToDo : possible de mettre ici une variation de la temperature horodatée */
+		
+        std::this_thread::sleep_for (std::chrono::seconds(1));
+    }
+}
+
+// Lecture de la temperature courante horodatee
+pair<string, int> Sensor::getTemperature()
+{
+    // Construction avec une date et une temprature aleatoire (code bouchon : possible de retourner ses propres valeurs)
+    int i = rand() % 30 + 1;
+    int day = rand() % 7;
+    std::array<string, 7> date_table{ {"lundi","mardi", "mercredi", "jeudi","vendredi", "samedi", "dimanche"}};
+    pair<string, int> l_temperatureInfo = make_pair(date_table.at(day), i);
+    
+    return l_temperatureInfo;
+}
+
+// Arret de la simulation de temperature
+void Sensor::stop()
+{
+    m_activated = false;
+}
+
+
+/******************************************/
+/*** Fichier : CAPFactory.cpp             ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+CAPFactory::CAPFactory()
+{
+    
+}
+
+CAPFactory::~CAPFactory()
+{
+    
+}
+
+/******************************************/
+/*** Fichier : CAPOperatorFactory.cpp     ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+
+CAPOperatorFactory::CAPOperatorFactory() : CAPFactory(),m_OperatorCount(0)
+{
+    
+}
+
+CAPOperatorFactory::~CAPOperatorFactory()
+{
+    
+}
+
+shared_ptr<CAP> CAPOperatorFactory::CreateCAP()
+{
+    ++m_OperatorCount;
+    /*shared_ptr<CAP> l_CAPOperator(new CAPOperator()); // 1ere methode creer une variable interm
+    return l_CAPOperator;*/
+    
+   return shared_ptr <CAP> (new CAPOperator(m_OperatorCount));
+}
+
+/******************************************/
+/*** Fichier : CAPAdminFactory.cpp             ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+CAPAdminFactory::CAPAdminFactory() : CAPFactory(),m_AdminCount(0)
+{
+    
+}
+
+CAPAdminFactory::~CAPAdminFactory()
+{
+    
+}
+
+shared_ptr<CAP> CAPAdminFactory::CreateCAP()
+{
+    ++m_AdminCount;
+    shared_ptr<CAP> l_CAPAdmin(new CAPAdmin(m_AdminCount));
+    return l_CAPAdmin;
+    //return shared_ptr <CAP> (new CAPAdminFactory());
+}
+
+/******************************************/
+/*** Fichier : CAP.cpp                  ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+CAP::CAP()  
+{
+    m_Name = "";
+   
+}
+
+CAP::CAP(string i_StringName) 
+{
+    m_Name = i_StringName;
+    //m_StorageTemp.push_back(make_pair<string,int>(25,"lundi"));
+
+}
+
+CAP::~CAP()
+{
+    
+}
+
+string CAP::getName() const
+{
+    return m_Name;
+}
+
+void CAP::RecordTemp(shared_ptr<Sensor> i_pSensor)
+{
+    for (auto i=0;i<2;++i)
+    {
+       // auto l_tmp = i_pSensor->getTemperature();
+        //cout << l_tmp.second << endl;
+        
+    //  m_StorageTemp.push_back(l_tmp); 
+        m_StorageTemp.push_back(i_pSensor->getTemperature()); 
+
+       std::this_thread::sleep_for (std::chrono::seconds(1));
+    }
+    
+    
+}
+
+void CAP::DisplayAllTemp()
+{
+    for(auto i = m_StorageTemp.begin();i != m_StorageTemp.end();++i )   
+    {
+        cout << "valeur de la temperature " << i->first << "jour : " << i->second << endl;
+    }
+}
+/******************************************/
+/*** Fichier : CAPOperator.cpp           ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+CAPOperator::CAPOperator(int i_CountOpe) : CAP("CAPOperator" + to_string(i_CountOpe))
+{
+    
+}
+
+CAPOperator::~CAPOperator()
+{
+    
+}
+
+/*void CAPOperator::DisplayAllTemp()
+{
+    
+}*/
+
+/******************************************/
+/*** Fichier : CAPAdmin.cpp        ***/
+/***                                     ***/
+/***                                     ***/
+/******************************************/
+
+CAPAdmin::CAPAdmin(int i_CountAdmin) : CAP("CAPAdmin" + to_string(i_CountAdmin))
+{
+    
+}
+
+CAPAdmin::~CAPAdmin()
+{
+    
+}
+
+/*void CAPAdmin::DisplayAllTemp()
+{
+    
+}*/
+
+/******************************************/
+/*** Fichier : main.cpp                 ***/
+/******************************************/
+int main() {
+    
+    cout << "Début main" <<endl;
+    
+    shared_ptr<Sensor> l_ptrSensor = shared_ptr<Sensor> (new Sensor());
+    
+    // Demarrage d'un autre thread pour le cpateur. Ainsi ne bloque pas le fonctionnement de la CAP
+    thread t1(&Sensor::sensorRunning, l_ptrSensor.get());
+   
+    std::this_thread::sleep_for (std::chrono::seconds(5));
+    
+    CAPAdminFactory l_FactoryAdmin;
+    CAPOperatorFactory l_FactoryOperator;
+    
+    shared_ptr<CAP> l_FirstCAPAdmin = l_FactoryAdmin.CreateCAP();
+    shared_ptr<CAP> l_CAPAdmin1 = l_FactoryAdmin.CreateCAP();
+    shared_ptr<CAP> l_CAPOperator1 = l_FactoryOperator.CreateCAP();
+    shared_ptr<CAP> l_CAPAdmin2 = l_FactoryAdmin.CreateCAP();
+
+
+
+    vector<shared_ptr<CAP>> l_CAPVector;
+    l_CAPVector.push_back(l_FirstCAPAdmin);
+    l_CAPVector.push_back(l_CAPAdmin1);
+    l_CAPVector.push_back(l_CAPOperator1);
+    l_CAPVector.push_back(l_CAPAdmin2);
+    cout << "////// noms en parcourant le vecteur  ////////" << endl;
+
+    for (auto i = l_CAPVector.begin(); i!= l_CAPVector.end();++i)
+    {
+        cout << (*i)->getName() << endl;
+    }
+    l_FirstCAPAdmin->RecordTemp(l_ptrSensor);
+   // l_FirstCAPAdmin->DisplayAllTemp();
+    
+    // Boucle pour parcourir et display les CAP
+    
+    // Stop the sensor working
+    l_ptrSensor->stop();
+    t1.join();
+    
+    cout << "fin main" <<endl;
+    return 0;
+}
+
